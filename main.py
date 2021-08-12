@@ -63,6 +63,9 @@ class Board:
         self.cubes = [[Cube(self.board[i][j], i, j, self.rows, width, height)
                        for j in range(dimension)] for i in range(dimension)]
 
+        #--------------------------- Solver states -----------------------------
+        self.is_board_updated = False
+
     def update_board(self):
         for i in range(self.rows):
             for j in range(self.cols):
@@ -129,6 +132,10 @@ class Board:
 
     # --------------------------------- Solver ------------------------------------
     def is_board_solved(self):
+        """
+        Method checks whether the board has been solved
+        :return True iff there are no more empty '_' positions left in the board
+        """
         for row in self.board:
             for element in row:
                 if element == '_':
@@ -136,28 +143,50 @@ class Board:
         return True
 
     def put(self, symbol, i, j):
+        """
+        Method put symbol in position (i,j) in the board
+
+        :param symbol is either '1' or '0' (maybe sometimes '_'?)
+        :param i is row number in the board
+        :param j is column number in the board
+        """
         if i in range(len(self.board)) and j in range(len(self.board)):
+            if self.board[i][j] == '_':
+                self.is_board_updated = True
             self.board[i][j] = symbol
 
     def solve_adjacent(self):
+        """
+        Method for every quadruple '_ 1 1 _' and '_ 0 0 _' fills the empty places with
+        '0' and '1' respectively
+        """
         for i in range(self.rows):
             for j in range(self.cols - 1):
-                if self.board[i][j] == self.board[i][j + 1] and self.board[i][j] == '1':
-                    self.put('0', i, j - 1)
-                    self.put('0', i, j + 2)
-                if self.board[i][j] == self.board[i][j + 1] and self.board[i][j] == '0':
-                    self.put('1', i, j - 1)
-                    self.put('1', i, j + 2)
+                if self.board[i][j] == self.board[i][j + 1]:
+                    if self.board[i][j] == '1':
+                        self.put('0', i, j - 1)
+                        self.put('0', i, j + 2)
+                    elif self.board[i][j] == '0':
+                        self.put('1', i, j - 1)
+                        self.put('1', i, j + 2)
 
     def solve_empty_middle(self):
+        """
+        Solve every triple in a row: '1 _ 1' and '0 _ 0' by filling with 0 and 1 respectively
+        """
         for i in range(self.rows):
             for j in range(self.cols - 2):
-                if self.board[i][j] == self.board[i][j + 2] and self.board[i][j] == '1':
-                    self.put('0', i, j + 1)
-                if self.board[i][j] == self.board[i][j + 2] and self.board[i][j] == '0':
-                    self.put('1', i, j + 1)
+                if self.board[i][j] == self.board[i][j + 2]:
+                    if self.board[i][j] == '1':
+                        self.put('0', i, j + 1)
+                    elif self.board[i][j] == '0':
+                        self.put('1', i, j + 1)
 
     def solve_one_remaining(self):
+        """
+        Method find all rows which have only one place unfilled and solve the remaining one
+        """
+
         for i in range(self.rows):
             number_of_empties = 0
             number_of_ones = 0
@@ -185,6 +214,10 @@ class Board:
                     self.put('0', location_of_empty[0], location_of_empty[1])
 
     def solve_half_full(self):
+        """
+        Method solve the board whenever all possible instances of 1 or 0 
+        are already placed (by filling the rest with 0 or 1 respectively)
+        """
         max_number_of_a_symbol = self.rows / 2
 
         for i in range(self.rows):
@@ -204,11 +237,13 @@ class Board:
                     if self.board[i][j] == '_':
                         self.put('0', i, j)
 
-    def solve(self, depth):
-
-        if depth == 0:
-            print("Maximum depth reached, finding solution failed!!!\n")
+    def solve(self, first_call=False):
+    
+        if not first_call and not self.is_board_updated:
+            print("Finding a solutions stopped!!!\n")
             return
+
+        self.is_board_updated = False
 
         # solve one of the items, by applying a row rule
         self.solve_adjacent()
@@ -216,7 +251,7 @@ class Board:
         self.solve_one_remaining()
         self.solve_half_full()
 
-        # solve transposed matrix by applying same row rule
+        # # solve transposed matrix by applying same row rule
         self.board = [[self.board[j][i] for j in range(self.rows)] for i in range(self.cols)]
 
         self.solve_adjacent()
@@ -229,9 +264,9 @@ class Board:
 
         # recurse ...
         if self.is_board_solved():
-            print("Solution found at depth " + str(depth) + "!!!")
+            print("Solution found!!!")
         else:
-            self.solve(depth - 1)
+            self.solve()
 
     def pretty_print(self):
         # pretty print
@@ -279,7 +314,7 @@ def main():
                     print("=====================================================")
                     print("solving puzzle:")
                     board.pretty_print()
-                    board.solve(dimension ** 2)
+                    board.solve(True)
                     board.update_view()
                     print("solved board:")
                     board.pretty_print()
