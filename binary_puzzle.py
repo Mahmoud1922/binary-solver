@@ -4,12 +4,10 @@ import pygame
 
 from pysmt.shortcuts import Symbol, And, Not, is_sat
 
-pygame.font.init()
-
 EMPTY = '_'
 
-
 class Cube:
+    '''Graphical representation of a cell in a playing board'''
 
     def __init__(self, value, row, col, dimension, width, height):
         self.value = value
@@ -27,7 +25,7 @@ class Cube:
         x = self.col * gap
         y = self.row * gap
 
-        if self.value != '_':
+        if self.value != EMPTY:
             text = fnt.render(str(self.value), 1, (0, 0, 0))
             win.blit(text, (x + (gap / 2 - text.get_width() / 2),
                      y + (gap / 2 - text.get_height() / 2)))
@@ -36,7 +34,7 @@ class Cube:
             pygame.draw.rect(win, (255, 0, 0), (x, y, gap, gap), 3)
 
     def set(self, val):
-        assert(val in {'0', '1', '_'})
+        assert(val in {'0', '1', EMPTY})
         self.value = val
 
 
@@ -160,11 +158,11 @@ class Board:
     def is_board_solved(self):
         """
         Method checks whether the board has been solved
-        :return True iff there are no more empty '_' positions left in the board
+        :return True iff there are no more empty EMPTY positions left in the board
         """
         for row in self.board:
             for element in row:
-                if element == '_':
+                if element == EMPTY:
                     return False
         return True
 
@@ -172,12 +170,12 @@ class Board:
         """
         Method put symbol in position (i,j) in the board
 
-        :param symbol is either '1' or '0' (maybe sometimes '_'?)
+        :param symbol is either '1' or '0' (maybe sometimes EMPTY?)
         :param i is row number in the board
         :param j is column number in the board
         """
         if i in range(len(self.board)) and j in range(len(self.board)):
-            if self.board[i][j] == '_':
+            if self.board[i][j] == EMPTY:
                 self.is_board_updated = True
             self.board[i][j] = symbol
 
@@ -220,7 +218,7 @@ class Board:
             location_of_empty = (0, 0)
             # find the only empty one
             for j in range(self.cols):
-                if self.board[i][j] == '_':
+                if self.board[i][j] == EMPTY:
                     if number_of_empties == 0:
                         number_of_empties = 1
                         location_of_empty = (i, j)
@@ -256,11 +254,11 @@ class Board:
                     ones += 1
             if zeros == max_number_of_a_symbol:
                 for j in range(self.cols):
-                    if self.board[i][j] == '_':
+                    if self.board[i][j] == EMPTY:
                         self.put('1', i, j)
             if ones == max_number_of_a_symbol:
                 for j in range(self.cols):
-                    if self.board[i][j] == '_':
+                    if self.board[i][j] == EMPTY:
                         self.put('0', i, j)
 
     # Returns False if absolutely no progress was made on the first call
@@ -310,14 +308,14 @@ class Board:
         print('\n'.join([''.join(['{:4}'.format(item) for item in row])
                          for row in self.board]))
 
-
-def redraw_window(win, board):
-    win.fill((255, 255, 255))
-    # Draw grid and board
-    board.draw(win)
+    def redraw_window(self, win):
+        win.fill((255, 255, 255))
+        # Draw grid and board
+        self.draw(win)
 
 
 def main():
+    pygame.font.init()
     # information about the initial setup
     dimension = 8
     ones_list = {}
@@ -387,7 +385,7 @@ def main():
                     key = None
                 if event.key == pygame.K_RETURN:
                     i, j = board.selected
-                    if board.cubes[i][j].value != '_':
+                    if board.cubes[i][j].value != EMPTY:
                         key = None
 
                         if board.is_board_solved():
@@ -404,10 +402,10 @@ def main():
         if board.selected and key != None:
             board.sketch(key)
 
-        redraw_window(win, board)
+        board.redraw_window(win)
         pygame.display.update()
 
-    # print full sovled board
+    # print full solved board
     print("Solved board:")
     board.pretty_print()
 
