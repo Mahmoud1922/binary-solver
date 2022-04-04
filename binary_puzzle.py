@@ -3,8 +3,10 @@
 import pygame
 
 from pysmt.shortcuts import Symbol, And, Not, is_sat
+from row_solver import RowFormula
 
 EMPTY = '_'
+
 
 class Cube:
     '''Graphical representation of a cell in a playing board'''
@@ -41,6 +43,7 @@ class Cube:
 class Board:
 
     def __init__(self, dimension, zeros, ones, width, height):
+        self.message = "Press F5 to start solution"
         # build the board out of zeros and ones
         self.board = [[EMPTY for i in range(dimension)]
                       for j in range(dimension)]
@@ -86,6 +89,20 @@ class Board:
 
         return True
 
+    def draw_message(self, win):
+        fnt = pygame.font.SysFont("comicsans", 24)
+
+        gap = self.width / self.cols
+        x = gap / 4
+        y = self.rows * gap
+
+        text = fnt.render(str(self.message), 1, (0, 0, 0))
+        win.blit(text, (x,
+                        y + (gap / 2 - text.get_height() / 2)))
+
+    def put_message(self, msg):
+        self.message = msg
+
     def select(self, row, col):
         # Reset all other
         for i in range(self.rows):
@@ -97,27 +114,31 @@ class Board:
 
     def move_up(self):
         (row, col) = self.selected
-        self.cubes[row][col].selected = False
-        self.cubes[row - 1][col].selected = True
-        self.selected = (row - 1, col)
+        if row != 0:
+            self.cubes[row][col].selected = False
+            self.cubes[row - 1][col].selected = True
+            self.selected = (row - 1, col)
 
     def move_down(self):
         (row, col) = self.selected
-        self.cubes[row][col].selected = False
-        self.cubes[row + 1][col].selected = True
-        self.selected = (row + 1, col)
+        if row != self.rows - 1:
+            self.cubes[row][col].selected = False
+            self.cubes[row + 1][col].selected = True
+            self.selected = (row + 1, col)
 
     def move_left(self):
         (row, col) = self.selected
-        self.cubes[row][col].selected = False
-        self.cubes[row][col - 1].selected = True
-        self.selected = (row, col - 1)
+        if col != 0:
+            self.cubes[row][col].selected = False
+            self.cubes[row][col - 1].selected = True
+            self.selected = (row, col - 1)
 
     def move_right(self):
         (row, col) = self.selected
-        self.cubes[row][col].selected = False
-        self.cubes[row][col + 1].selected = True
-        self.selected = (row, col + 1)
+        if col != self.cols - 1:
+            self.cubes[row][col].selected = False
+            self.cubes[row][col + 1].selected = True
+            self.selected = (row, col + 1)
 
     def sketch(self, val):
         row, col = self.selected
@@ -127,10 +148,10 @@ class Board:
         # Draw Grid Lines
         gap = self.width / self.rows
         for i in range(self.rows + 1):
-            if i % 3 == 0 and i != 0:
-                thick = 4
-            else:
-                thick = 1
+            # if i % 3 == 0 and i != 0:
+            #     thick = 4
+            # else:
+            thick = 1
             pygame.draw.line(win, (0, 0, 0), (0, i * gap),
                              (self.width, i * gap), thick)
             pygame.draw.line(win, (0, 0, 0), (i * gap, 0),
@@ -140,6 +161,8 @@ class Board:
         for i in range(self.rows):
             for j in range(self.cols):
                 self.cubes[i][j].draw(win)
+
+        self.draw_message(win)
 
     def click(self, pos):
         """
@@ -239,7 +262,7 @@ class Board:
 
     def solve_half_full(self):
         """
-        Method solve the board whenever all possible instances of 1 or 0 
+        Method which solves the board whenever all possible instances of either 1 or 0 
         are already placed (by filling the rest with 0 or 1 respectively)
         """
         max_number_of_a_symbol = self.rows / 2
@@ -261,6 +284,21 @@ class Board:
                     if self.board[i][j] == EMPTY:
                         self.put('0', i, j)
 
+    def solve_rows(self):
+        for i in range(self.rows):
+            row_formula = RowFormula(self.rows)
+            row_formula.fill_in(self.board[i])
+            if row_formula.is_satisfiable():
+                solution = row_formula.get_solution()
+                if self.board[i] != solution:
+                    for j in range(self.cols):
+                        if self.board[i][j] == EMPTY and solution[j] != EMPTY:
+                            self.put(solution[j], i, j)
+            else:
+                # Not satisfiable!
+                return False
+        return True
+
     # Returns False if absolutely no progress was made on the first call
     def solve(self, first_call=False):
 
@@ -272,7 +310,7 @@ class Board:
         self.solve_one_remaining()
         self.solve_half_full()
 
-        # # solve transposed matrix by applying same row rule
+        # solve transposed matrix by applying same row rule
         self.board = [[self.board[j][i]
                        for j in range(self.rows)] for i in range(self.cols)]
 
@@ -290,17 +328,49 @@ class Board:
             print("No progress made with heuristics!!!\n")
             return False
         elif not self.is_board_updated:
-            print("Finding a solutions stopped!!!\n")
-            return True
+            print("Finding a solutions with heuristics stopped!!!\n")
+            return False
         elif self.is_board_solved():
             print("Solution found!!!")
             return True
         else:
             return self.solve()
 
-    def smt_solve(self):
+    def smt_solve(self, first_call=False):
 
-        return False
+        self.is_board_updated = False
+
+        # solve one of the items, by applying a row rule
+        result = self.solve_rows()
+
+        if not result:
+            return "not satisfiable!"
+
+        # solve transposed matrix by applying same row rule
+        self.board = [[self.board[j][i]
+                       for j in range(self.rows)] for i in range(self.cols)]
+
+        result = self.solve_rows()
+
+        if not result:
+            return "not satisfiable!"
+
+        # transpose result
+        self.board = [[self.board[j][i]
+                       for j in range(self.rows)] for i in range(self.cols)]
+
+        # recurse ...
+        if first_call and not self.is_board_updated:
+            print("No progress, board has multiple solutions!!!\n")
+            return "multiple solutions possible!"
+        elif not self.is_board_updated:
+            print("Finding a solutions with SMT solver stopped!!!\n")
+            return "multiple solutions possible!"
+        elif self.is_board_solved():
+            print("Solution found!!!")
+            return ""
+        else:
+            return self.smt_solve()
 
     def pretty_print(self):
         # pretty print
@@ -358,27 +428,35 @@ def main():
                 if event.key == pygame.K_F5:
                     board.update_board()
                     print("=====================================================")
-                    print("solving puzzle:")
+                    board.put_message("Solving puzzle ...")
+                    board.redraw_window(win)
+                    pygame.display.update()
                     board.pretty_print()
                     result = board.solve(True)
                     if result:
                         board.update_view()
-                        print("solved board:")
+                        board.put_message("Solved board!")
                         board.pretty_print()
                     else:
-                        print("Not solvable via conventional methods, try F6")
+                        board.update_view()
+                        board.put_message(
+                            "Not solvable via conventional methods, try F6")
                 if event.key == pygame.K_F6:
                     board.update_board()
                     print("=====================================================")
-                    print("solving puzzle with SMT:")
+                    board.put_message("Solving puzzle with SMT ...")
+                    board.redraw_window(win)
+                    pygame.display.update()
                     board.pretty_print()
-                    result = board.smt_solve()
-                    if result:
+                    result = board.smt_solve(True)
+                    if result == "":
                         board.update_view()
-                        print("solved board with SMT:")
+                        board.put_message("Solved board with SMT!")
                         board.pretty_print()
                     else:
-                        print("No solution found!")
+                        board.update_view()
+                        board.put_message(
+                            "Puzzle cannot be solved because " + result)
 
                 if event.key == pygame.K_DELETE:
                     board.clear()
@@ -389,7 +467,7 @@ def main():
                         key = None
 
                         if board.is_board_solved():
-                            print("Puzzle solved!!!")
+                            board.put_message("Puzzle solved!!!")
                             run = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:

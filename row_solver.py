@@ -14,7 +14,7 @@ class RowFormula:
         for i in range(1, self.dimension+1):
             self.var_list.append(Symbol("A"+str(i)))
 
-        print(self.var_list)
+        # print(self.var_list)
 
         # Create formulae satisfiable iff exactly half the symbols are true and half are false
         negation_combinations = list(itertools.combinations(
@@ -120,11 +120,12 @@ class RowFormula:
 
 if __name__ == "__main__":
     row = RowFormula(8)
-    env = ['0', '1', '1', '0', '_', '_', '1', '_']
+    env = ['0', '1', '1', '0', '_', '1', '1', '0']
     row.fill_in(env)
     print("My formula is satisfiable: ", row.is_satisfiable())
-    solution = row.get_solution()
-    if solution == env:
-        print('no progress made with:', env)
-    else:
-        print('env:', env, '\nsol:', solution)
+    if row.is_satisfiable():
+        solution = row.get_solution()
+        if solution == env:
+            print('no progress made with:', env)
+        else:
+            print('env:', env, '\nsol:', solution)
