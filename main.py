@@ -29,7 +29,8 @@ class Cube:
 
         if self.value != '_':
             text = fnt.render(str(self.value), 1, (0, 0, 0))
-            win.blit(text, (x + (gap / 2 - text.get_width() / 2), y + (gap / 2 - text.get_height() / 2)))
+            win.blit(text, (x + (gap / 2 - text.get_width() / 2),
+                     y + (gap / 2 - text.get_height() / 2)))
 
         if self.selected:
             pygame.draw.rect(win, (255, 0, 0), (x, y, gap, gap), 3)
@@ -38,11 +39,13 @@ class Cube:
         assert(val in {'0', '1', '_'})
         self.value = val
 
+
 class Board:
 
     def __init__(self, dimension, zeros, ones, width, height):
         # build the board out of zeros and ones
-        self.board = [[EMPTY for i in range(dimension)] for j in range(dimension)]
+        self.board = [[EMPTY for i in range(dimension)]
+                      for j in range(dimension)]
 
         for i, j in ones:
             self.board[i - 1][j - 1] = '1'
@@ -60,7 +63,7 @@ class Board:
         self.cubes = [[Cube(self.board[i][j], i, j, self.rows, width, height)
                        for j in range(dimension)] for i in range(dimension)]
 
-        #--------------------------- Solver states -----------------------------
+        # --------------------------- Solver states -----------------------------
         self.is_board_updated = False
 
     def update_board(self):
@@ -130,8 +133,10 @@ class Board:
                 thick = 4
             else:
                 thick = 1
-            pygame.draw.line(win, (0, 0, 0), (0, i * gap), (self.width, i * gap), thick)
-            pygame.draw.line(win, (0, 0, 0), (i * gap, 0), (i * gap, self.height), thick)
+            pygame.draw.line(win, (0, 0, 0), (0, i * gap),
+                             (self.width, i * gap), thick)
+            pygame.draw.line(win, (0, 0, 0), (i * gap, 0),
+                             (i * gap, self.height), thick)
 
         # Draw Cubes
         for i in range(self.rows):
@@ -270,7 +275,8 @@ class Board:
         self.solve_half_full()
 
         # # solve transposed matrix by applying same row rule
-        self.board = [[self.board[j][i] for j in range(self.rows)] for i in range(self.cols)]
+        self.board = [[self.board[j][i]
+                       for j in range(self.rows)] for i in range(self.cols)]
 
         self.solve_adjacent()
         self.solve_empty_middle()
@@ -278,7 +284,8 @@ class Board:
         self.solve_half_full()
 
         # transpose result
-        self.board = [[self.board[j][i] for j in range(self.rows)] for i in range(self.cols)]
+        self.board = [[self.board[j][i]
+                       for j in range(self.rows)] for i in range(self.cols)]
 
         # recurse ...
         if first_call and not self.is_board_updated:
