@@ -1,7 +1,4 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+# Main file for the binary solver
 
 import pygame
 
@@ -96,6 +93,30 @@ class Board:
 
         self.cubes[row][col].selected = True
         self.selected = (row, col)
+
+    def move_up(self):
+        (row, col) = self.selected
+        self.cubes[row][col].selected = False
+        self.cubes[row - 1][col].selected = True
+        self.selected = (row - 1, col)
+
+    def move_down(self):
+        (row, col) = self.selected
+        self.cubes[row][col].selected = False
+        self.cubes[row + 1][col].selected = True
+        self.selected = (row + 1, col)
+
+    def move_left(self):
+        (row, col) = self.selected
+        self.cubes[row][col].selected = False
+        self.cubes[row][col - 1].selected = True
+        self.selected = (row, col - 1)
+
+    def move_right(self):
+        (row, col) = self.selected
+        self.cubes[row][col].selected = False
+        self.cubes[row][col + 1].selected = True
+        self.selected = (row, col + 1)
 
     def sketch(self, val):
         row, col = self.selected
@@ -237,11 +258,8 @@ class Board:
                     if self.board[i][j] == '_':
                         self.put('0', i, j)
 
+    # Returns False if absolutely no progress was made on the first call
     def solve(self, first_call=False):
-    
-        if not first_call and not self.is_board_updated:
-            print("Finding a solutions stopped!!!\n")
-            return
 
         self.is_board_updated = False
 
@@ -263,10 +281,21 @@ class Board:
         self.board = [[self.board[j][i] for j in range(self.rows)] for i in range(self.cols)]
 
         # recurse ...
-        if self.is_board_solved():
+        if first_call and not self.is_board_updated:
+            print("No progress made with heuristics!!!\n")
+            return False
+        elif not self.is_board_updated:
+            print("Finding a solutions stopped!!!\n")
+            return True
+        elif self.is_board_solved():
             print("Solution found!!!")
+            return True
         else:
-            self.solve()
+            return self.solve()
+
+    def smt_solve(self):
+
+        return False
 
     def pretty_print(self):
         # pretty print
@@ -309,15 +338,43 @@ def main():
                     key = '0'
                 if event.key == pygame.K_1:
                     key = '1'
+                if event.key == pygame.K_UP:
+                    key = None
+                    board.move_up()
+                if event.key == pygame.K_DOWN:
+                    key = None
+                    board.move_down()
+                if event.key == pygame.K_LEFT:
+                    key = None
+                    board.move_left()
+                if event.key == pygame.K_RIGHT:
+                    key = None
+                    board.move_right()
                 if event.key == pygame.K_F5:
                     board.update_board()
                     print("=====================================================")
                     print("solving puzzle:")
                     board.pretty_print()
-                    board.solve(True)
-                    board.update_view()
-                    print("solved board:")
+                    result = board.solve(True)
+                    if result:
+                        board.update_view()
+                        print("solved board:")
+                        board.pretty_print()
+                    else:
+                        print("Not solvable via conventional methods, try F6")
+                if event.key == pygame.K_F6:
+                    board.update_board()
+                    print("=====================================================")
+                    print("solving puzzle with SMT:")
                     board.pretty_print()
+                    result = board.smt_solve()
+                    if result:
+                        board.update_view()
+                        print("solved board with SMT:")
+                        board.pretty_print()
+                    else:
+                        print("No solution found!")
+
                 if event.key == pygame.K_DELETE:
                     board.clear()
                     key = None
