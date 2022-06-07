@@ -1,14 +1,12 @@
 # binary-solver
 
-A while ago I was introduced to binary puzzles: (https://www.binarypuzzle.com) but while solving some "very hard" puzzles I noticed there is no way to proceed.
-My guess was multiple solutions exist for these puzzles. To prove that I wrote this program. A part of the code for drawing the grid is hijacked from (https://github.com/techwithtim/Sudoku-GUI-Solver/blob/master/GUI.py).
+A while ago I was introduced to binary puzzles: (https://www.binarypuzzle.com) but while solving some "very hard" puzzles I noticed there is no way to proceed. My guess was multiple solutions exist for these puzzles and to prove that I wrote this program. A part of the code for drawing the grid is hijacked from (https://github.com/techwithtim/Sudoku-GUI-Solver/blob/master/GUI.py).
 
-The solver employs some heuristics as well as an SMT solver as last resort.
-
-This program depends on [pygame](https://www.pygame.org/wiki/GettingStarted#Pygame%20Installation) and [smt_solver](https://pypi.org/project/PySMT/) packages.
-I used [Z3](https://github.com/Z3Prover/z3/) for SAT solving.
+This program depends on [pygame](https://www.pygame.org/wiki/GettingStarted#Pygame%20Installation) and [smt_solver](https://pypi.org/project/PySMT/) packages. I used [Z3](https://github.com/Z3Prover/z3/) for SAT solving.
 
 ## How to use
+
+The solver employs some heuristics as well as an SMT solver as last resort.
 
 0. Set the puzzle dimension in the file [binary_puzzle.py](https://github.com/Mahmoud1922/binary-solver/blob/master/binary_puzzle.py#L12), and run it.
 1. Fill out the initial known values by entering 0s and 1s in the corresponding cells.
