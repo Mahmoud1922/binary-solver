@@ -1,7 +1,7 @@
 # binary-solver
 
 A while ago I was introduced to binary puzzles: (https://www.binarypuzzle.com) but while solving some "very hard" puzzles I noticed there is no way to proceed.
-My guess was multiple solutions exist for these puzzles. To prove that I wrote this program. A part of the code is hijacked from somewhere, I do not remeber where anymore!
+My guess was multiple solutions exist for these puzzles. To prove that I wrote this program. A part of the code for drawing the grid is hijacked from (https://github.com/techwithtim/Sudoku-GUI-Solver/blob/master/GUI.py).
 
 The solver employs some heuristics as well as an SMT solver as last resort.
 
